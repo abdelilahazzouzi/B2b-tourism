@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Brutalist-corporate palette */
+  --color-deep-navy: #0A1128;
+  --color-absolute-white: #FFFFFF;
+  --color-slate-gray: #4A5568;
+
+  --background: var(--color-absolute-white);
+  --foreground: var(--color-deep-navy);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-navy: var(--color-deep-navy);
+  --color-white: var(--color-absolute-white);
+  --color-slate: var(--color-slate-gray);
+  
+  --color-primary: var(--color-deep-navy);
+  --color-primary-foreground: var(--color-absolute-white);
+
+  --font-sans: var(--font-geist-sans), Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
