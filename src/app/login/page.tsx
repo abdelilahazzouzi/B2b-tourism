@@ -46,14 +46,23 @@ export default async function LoginPage({
           </div>
         )}
 
-        {/* Password login */}
+        {/* Password Login */}
         <div className="bg-white border-2 border-slate p-8 shadow-[8px_8px_0px_0px_rgba(74,85,104,1)] mb-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Lock className="w-4 h-4 text-navy" />
-            <h1 className="text-2xl font-black uppercase tracking-tighter text-navy">
-              Sign In
-            </h1>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4 text-navy" />
+              <h1 className="text-2xl font-black uppercase tracking-tighter text-navy">
+                Sign In
+              </h1>
+            </div>
+            <Link
+              href="/forgot-password"
+              className="text-xs font-bold uppercase tracking-wider text-slate hover:text-navy underline"
+            >
+              Forgot Password?
+            </Link>
           </div>
+
           <form className="space-y-5">
             <div className="space-y-2">
               <label
@@ -82,29 +91,36 @@ export default async function LoginPage({
                 id="password"
                 name="password"
                 type="password"
+                placeholder="••••••••"
                 required
                 autoComplete="current-password"
               />
             </div>
             <div className="pt-2">
               <Button formAction={login} className="w-full h-12 text-base">
-                Sign In with Password
+                Sign In
               </Button>
             </div>
           </form>
+
+          <p className="mt-6 text-center text-xs text-slate uppercase tracking-wider border-t border-slate/20 pt-4">
+            Don&apos;t have an account?{" "}
+            <Link href="/signup" className="text-navy font-bold hover:underline">
+              Create Account
+            </Link>
+          </p>
         </div>
 
-        {/* Magic link option — for OTP-onboarded users who have no password */}
+        {/* Magic Link Option */}
         <div className="bg-white border-2 border-slate p-8 shadow-[8px_8px_0px_0px_rgba(74,85,104,1)]">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-3">
             <Mail className="w-4 h-4 text-navy" />
             <h2 className="text-lg font-black uppercase tracking-tighter text-navy">
-              No Password?
+              One-Click Magic Link
             </h2>
           </div>
-          <p className="text-sm text-slate font-medium mb-5 leading-relaxed">
-            If you joined via a magic link, enter your email below and we&apos;ll
-            send you a new one-click access link.
+          <p className="text-xs text-slate font-medium mb-5 leading-relaxed">
+            Prefer not to enter a password? Enter your email and we&apos;ll send you an instant access link.
           </p>
           <form className="space-y-4">
             <Input
@@ -126,9 +142,9 @@ export default async function LoginPage({
         </div>
 
         <p className="mt-6 text-center text-xs text-slate uppercase tracking-wider">
-          Don&apos;t have access?{" "}
+          Are you a B2B partner?{" "}
           <Link href="/request-access" className="text-navy font-bold hover:underline">
-            Request an Invitation
+            Request VIP Invitation
           </Link>
         </p>
       </div>

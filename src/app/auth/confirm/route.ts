@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         .eq("id", user.id)
         .single();
 
-      if (!profile || !profile.full_name || profile.full_name.trim() === "") {
+      if (next !== "/auth/reset-password" && (!profile || !profile.full_name || profile.full_name.trim() === "")) {
         return NextResponse.redirect(new URL("/onboarding", request.url));
       }
     }

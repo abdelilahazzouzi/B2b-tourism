@@ -23,10 +23,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth pages (/login, /request-access)
+  // Redirect authenticated users away from auth pages (/login, /signup, /request-access, /forgot-password)
   const isAuthPage =
     pathname.startsWith("/login") ||
-    pathname.startsWith("/request-access");
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/request-access") ||
+    pathname.startsWith("/forgot-password");
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();

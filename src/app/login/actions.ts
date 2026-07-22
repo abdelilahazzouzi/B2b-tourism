@@ -4,26 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { z } from "zod";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
-
-function toUserFacingError(message: string): string {
-  const msgLower = message.toLowerCase();
-  if (msgLower.includes("fetch failed") || msgLower.includes("enotfound") || msgLower.includes("network")) {
-    return "Unable to reach the server. Please check your internet connection and try again.";
-  }
-  if (msgLower.includes("invalid login credentials")) {
-    return "Incorrect email or password. If you signed up via a magic link, use \"Send me a link\" below.";
-  }
-  if (msgLower.includes("email not confirmed")) {
-    return "Please confirm your email before signing in.";
-  }
-  return message;
-}
 
 export async function login(formData: FormData) {
   const raw = {
@@ -46,12 +33,41 @@ export async function login(formData: FormData) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      redirect(`/login?error=${encodeURIComponent(toUserFacingError(error.message))}`);
+      const msgLower = error.message.toLowerCase();
+
+      if (msgLower.includes("fetch failed") || msgLower.includes("enotfound")) {
+        redirect(`/login?error=${encodeURIComponent("Unable to reach server. Please check your internet connection.")}`);
+      }
+
+      if (msgLower.includes("invalid login credentials")) {
+        // Smart check: Does an account exist with this email?
+        const adminClient = createAdminClient();
+        const { data: usersData } = await adminClient.auth.admin.listUsers();
+        const userExists = usersData?.users?.some(
+          (u) => u.email?.toLowerCase() === email.toLowerCase()
+        );
+
+        if (!userExists) {
+          redirect(
+            `/login?error=${encodeURIComponent(
+              "No account on record with this email address. Please sign up to create an account."
+            )}`
+          );
+        } else {
+          redirect(
+            `/login?error=${encodeURIComponent(
+              "Incorrect password. If you don't have a password or forgot it, use Magic Link or Reset Password below."
+            )}`
+          );
+        }
+      }
+
+      redirect(`/login?error=${encodeURIComponent(error.message)}`);
     }
   } catch (err) {
     if (err instanceof Error && "digest" in err) throw err;
-    const friendly = toUserFacingError(String(err));
-    redirect(`/login?error=${encodeURIComponent(friendly)}`);
+    const msg = String(err);
+    redirect(`/login?error=${encodeURIComponent(msg)}`);
   }
 
   revalidatePath("/", "layout");
