@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { ArrowRight, Activity } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 const textReveal = {
@@ -73,29 +74,22 @@ export function HeroSection() {
           </motion.div>
         </div>
         
-        <div className="flex-1 hidden md:block">
+        <div className="flex-1 hidden md:block relative">
           <motion.div 
-            initial={{ rotate: -5, opacity: 0 }}
-            animate={{ rotate: 0, opacity: 1 }}
+            initial={{ rotate: -3, opacity: 0, scale: 0.9 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
             transition={{ type: "spring", stiffness: 50, delay: 0.2 }}
-            className="aspect-square bg-navy relative overflow-hidden flex items-center justify-center border-4 border-slate p-8 shadow-[16px_16px_0px_0px_rgba(74,85,104,1)] group"
+            className="aspect-square bg-navy relative overflow-hidden border-4 border-navy shadow-[16px_16px_0px_0px_rgba(74,85,104,1)] group"
           >
-            <div className="w-full h-full grid grid-cols-5 grid-rows-5 gap-1 transition-transform duration-700 ease-out group-hover:scale-110">
-              {Array.from({ length: 25 }).map((_, i) => (
-                <motion.div 
-                  key={i}
-                  whileHover={{ scale: 0.8, backgroundColor: "#FFFFFF" }}
-                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                  className="bg-white/10 w-full h-full cursor-crosshair"
-                />
-              ))}
-            </div>
-            
-            <div className="absolute inset-0 pointer-events-none border border-slate/30 border-dashed grid grid-cols-3 grid-rows-3 mix-blend-overlay">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="border border-slate/30 border-dashed" />
-              ))}
-            </div>
+            <Image 
+              src="/morocco_hero.png" 
+              alt="Premium Moroccan Architecture"
+              fill
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105 filter contrast-125 saturate-50"
+              priority
+            />
+            <div className="absolute inset-0 bg-navy/20 mix-blend-multiply pointer-events-none" />
+            <div className="absolute inset-0 border border-white/20 pointer-events-none m-4" />
           </motion.div>
         </div>
       </div>

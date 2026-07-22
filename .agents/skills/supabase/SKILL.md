@@ -129,6 +129,14 @@ Do NOT use `apply_migration` to change a local database schema — it writes a m
 3. **Generate the migration** → `supabase db pull <descriptive-name> --local --yes`
 4. **Verify** → `supabase migration list --local`
 
+## Next.js App Router & SSR Gotchas
+
+When using `@supabase/ssr` or `supabase-js` in Next.js 13+ App Router, be aware of the following:
+
+- **Aggressive Fetch Caching**: Next.js heavily caches `fetch` requests, which Supabase JS uses under the hood. When fetching user profiles or dynamic role data in Layouts or Server Components, Next.js may serve a stale `null` or outdated role. Always export `export const fetchCache = 'force-no-store';` and `export const dynamic = 'force-dynamic';` in layouts/pages that depend on fresh auth or profile state to guarantee correct UI rendering.
+- **Bypassing RLS for Critical Server-Side Authorization**: When performing critical role checks (e.g., verifying if a user is an admin inside `layout.tsx`) using the standard user client, complex RLS policies might unexpectedly return `null` and lock the user out. Once you have authenticated the user via `getUser()`, use a separate admin client instantiated with the `service_role` key to fetch their profile role, explicitly bypassing RLS to guarantee the read succeeds.
+- **Supabase Free Tier Email Limits**: The Supabase free tier hard-limits emails to 3 per hour. If you rely on `inviteUserByEmail` or `signInWithOtp` for onboarding or testing, it will throw rate-limit errors quickly. Use `adminClient.auth.admin.generateLink({ type: 'invite', ... })` to bypass the email sender entirely and generate manual copy-paste links for the admin dashboard.
+
 ## Reference Guides
 
 - **Skill Feedback** → [references/skill-feedback.md](references/skill-feedback.md)

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LogoutButton } from "@/components/ui/LogoutButton";
 import { LayoutDashboard, Plane, FileText, LifeBuoy, User, Shield } from "lucide-react";
@@ -22,9 +23,14 @@ export default async function DashboardLayout({
     const adminClient = createAdminClient();
     const { data: profile } = await adminClient
       .from("profiles")
-      .select("role")
+      .select("role, full_name")
       .eq("id", user.id)
       .single();
+    
+    if (profile && (!profile.full_name || profile.full_name.trim() === "")) {
+      redirect("/onboarding");
+    }
+
     isAdmin = profile?.role === "admin";
   }
 
