@@ -14,6 +14,9 @@ const requestSchema = z.object({
 
 function toUserFacingError(message: string): string {
   const msgLower = message.toLowerCase();
+  if (msgLower.includes("fetch failed") || msgLower.includes("enotfound") || msgLower.includes("network")) {
+    return "Unable to reach the server. Please check your internet connection and try again.";
+  }
   if (msgLower.includes("rate limit") || msgLower.includes("too many requests")) {
     return "Email rate limit reached. Please wait a few minutes before trying again or request a direct link from your admin.";
   }
@@ -39,45 +42,53 @@ export async function requestInvitation(formData: FormData) {
   }
 
   const { name, email } = parsed.data;
-  const adminClient = createAdminClient();
 
-  // Check if this email already exists in invitation_requests
-  const { data: existing } = await adminClient
-    .from("invitation_requests")
-    .select("status")
-    .eq("email", email)
-    .maybeSingle();
+  try {
+    const adminClient = createAdminClient();
 
-  if (existing) {
-    if (existing.status === "approved") {
-      redirect(
-        `/request-access?error=${encodeURIComponent(
-          "Your invitation has already been approved! Please check your inbox for your access link, or contact an admin."
-        )}`
-      );
-    } else if (existing.status === "pending") {
-      redirect(
-        `/request-access?error=${encodeURIComponent(
-          "Your invitation request is currently under review by our team."
-        )}`
-      );
-    } else {
-      redirect(
-        `/request-access?error=${encodeURIComponent(
-          "An invitation request for this email was previously processed."
-        )}`
-      );
+    // Check if this email already exists in invitation_requests
+    const { data: existing } = await adminClient
+      .from("invitation_requests")
+      .select("status")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (existing) {
+      if (existing.status === "approved") {
+        redirect(
+          `/request-access?error=${encodeURIComponent(
+            "Your invitation has already been approved! Please check your inbox for your access link, or contact an admin."
+          )}`
+        );
+      } else if (existing.status === "pending") {
+        redirect(
+          `/request-access?error=${encodeURIComponent(
+            "Your invitation request is currently under review by our team."
+          )}`
+        );
+      } else {
+        redirect(
+          `/request-access?error=${encodeURIComponent(
+            "An invitation request for this email was previously processed."
+          )}`
+        );
+      }
     }
-  }
 
-  // Insert new request
-  const { error } = await adminClient.from("invitation_requests").insert({
-    name,
-    email,
-  });
+    // Insert new request
+    const { error } = await adminClient.from("invitation_requests").insert({
+      name,
+      email,
+    });
 
-  if (error) {
-    const friendly = toUserFacingError(error.message);
+    if (error) {
+      const friendly = toUserFacingError(error.message);
+      redirect(`/request-access?error=${encodeURIComponent(friendly)}`);
+    }
+  } catch (err) {
+    // Re-throw Next.js redirect errors (they use throw internally)
+    if (err instanceof Error && "digest" in err) throw err;
+    const friendly = toUserFacingError(String(err));
     redirect(`/request-access?error=${encodeURIComponent(friendly)}`);
   }
 
@@ -94,20 +105,27 @@ export async function sendMagicLink(formData: FormData) {
   }
 
   const email = parsed.data;
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const siteUrl = await getSiteUrl();
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: false,
-      emailRedirectTo: `${siteUrl}/auth/confirm`,
-    },
-  });
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const siteUrl = await getSiteUrl();
 
-  if (error) {
-    const friendly = toUserFacingError(error.message);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${siteUrl}/auth/confirm`,
+      },
+    });
+
+    if (error) {
+      const friendly = toUserFacingError(error.message);
+      redirect(`/login?error=${encodeURIComponent(friendly)}`);
+    }
+  } catch (err) {
+    if (err instanceof Error && "digest" in err) throw err;
+    const friendly = toUserFacingError(String(err));
     redirect(`/login?error=${encodeURIComponent(friendly)}`);
   }
 

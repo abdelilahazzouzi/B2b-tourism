@@ -85,6 +85,7 @@ export function HeroSection() {
               src="/morocco_hero.png" 
               alt="Premium Moroccan Architecture"
               fill
+              sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover transition-transform duration-700 ease-out group-hover:scale-105 filter contrast-125 saturate-50"
               priority
             />

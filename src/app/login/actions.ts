@@ -13,6 +13,9 @@ const loginSchema = z.object({
 
 function toUserFacingError(message: string): string {
   const msgLower = message.toLowerCase();
+  if (msgLower.includes("fetch failed") || msgLower.includes("enotfound") || msgLower.includes("network")) {
+    return "Unable to reach the server. Please check your internet connection and try again.";
+  }
   if (msgLower.includes("invalid login credentials")) {
     return "Incorrect email or password. If you signed up via a magic link, use \"Send me a link\" below.";
   }
@@ -35,13 +38,20 @@ export async function login(formData: FormData) {
   }
 
   const { email, password } = parsed.data;
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
 
-  if (error) {
-    redirect(`/login?error=${encodeURIComponent(toUserFacingError(error.message))}`);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      redirect(`/login?error=${encodeURIComponent(toUserFacingError(error.message))}`);
+    }
+  } catch (err) {
+    if (err instanceof Error && "digest" in err) throw err;
+    const friendly = toUserFacingError(String(err));
+    redirect(`/login?error=${encodeURIComponent(friendly)}`);
   }
 
   revalidatePath("/", "layout");
