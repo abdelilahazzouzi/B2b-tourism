@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { getSiteUrl } from "@/utils/url";
 import { z } from "zod";
 
@@ -40,11 +41,10 @@ export async function requestInvitation(formData: FormData) {
 
   const { name, email } = parsed.data;
 
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const adminClient = createAdminClient();
 
   // Insert into the invitation_requests table for admin approval
-  const { error } = await supabase.from("invitation_requests").insert({
+  const { error } = await adminClient.from("invitation_requests").insert({
     name,
     email,
   });

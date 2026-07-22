@@ -44,7 +44,7 @@ export async function approveInvitation(formData: FormData) {
   const siteUrl = await getSiteUrl();
 
   // 1. Generate a one-time invite link (bypasses email sending entirely)
-  const { data: linkData, error: inviteError } =
+  let { data: linkData, error: inviteError } =
     await adminClient.auth.admin.generateLink({
       type: "invite",
       email,
@@ -54,8 +54,21 @@ export async function approveInvitation(formData: FormData) {
       },
     });
 
+  // Fallback: If user already exists in auth.users, generate a magic link
   if (inviteError) {
-    redirect(`/admin?error=${encodeURIComponent(inviteError.message)}`);
+    const { data: magicData, error: magicError } =
+      await adminClient.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+        options: {
+          redirectTo: `${siteUrl}/auth/confirm`,
+        },
+      });
+
+    if (magicError) {
+      redirect(`/admin?error=${encodeURIComponent(magicError.message)}`);
+    }
+    linkData = magicData;
   }
 
   const inviteLink = linkData?.properties?.action_link ?? "";
@@ -75,6 +88,52 @@ export async function approveInvitation(formData: FormData) {
   revalidatePath("/admin");
 
   // 3. Redirect back to admin page with the invite link so admin can copy it
+  redirect(
+    `/admin?inviteLink=${encodeURIComponent(inviteLink)}&inviteName=${encodeURIComponent(name)}&inviteEmail=${encodeURIComponent(email)}`
+  );
+}
+
+export async function createDirectInvitation(formData: FormData) {
+  await requireAdmin();
+  const email = (formData.get("email") as string)?.trim();
+  const name = (formData.get("name") as string)?.trim();
+
+  if (!email || !name) {
+    redirect("/admin?error=Name+and+email+are+required");
+  }
+
+  const adminClient = createAdminClient();
+  const siteUrl = await getSiteUrl();
+
+  let { data: linkData, error: inviteError } =
+    await adminClient.auth.admin.generateLink({
+      type: "invite",
+      email,
+      options: {
+        data: { full_name: name },
+        redirectTo: `${siteUrl}/auth/confirm`,
+      },
+    });
+
+  if (inviteError) {
+    const { data: magicData, error: magicError } =
+      await adminClient.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+        options: {
+          redirectTo: `${siteUrl}/auth/confirm`,
+        },
+      });
+
+    if (magicError) {
+      redirect(`/admin?error=${encodeURIComponent(magicError.message)}`);
+    }
+    linkData = magicData;
+  }
+
+  const inviteLink = linkData?.properties?.action_link ?? "";
+
+  revalidatePath("/admin");
   redirect(
     `/admin?inviteLink=${encodeURIComponent(inviteLink)}&inviteName=${encodeURIComponent(name)}&inviteEmail=${encodeURIComponent(email)}`
   );

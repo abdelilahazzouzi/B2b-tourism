@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { Button } from "@/components/ui/Button";
-import { approveInvitation, rejectInvitation } from "./actions";
+import { approveInvitation, rejectInvitation, createDirectInvitation } from "./actions";
 import { ShieldCheck, Clock, CheckCircle2, XCircle, Link2 } from "lucide-react";
 import type { InvitationRequest } from "@/types/domain";
 import { CopyButton } from "@/components/ui/CopyButton";
@@ -158,6 +158,41 @@ export default async function AdminPage({
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Direct Invite Card */}
+      <div className="border-2 border-navy bg-white p-6 shadow-[8px_8px_0px_0px_rgba(10,17,40,1)]">
+        <h2 className="text-lg font-black uppercase tracking-tight text-navy mb-2">
+          Generate Direct Access Link
+        </h2>
+        <p className="text-xs text-slate font-medium mb-4">
+          Directly generate a one-time sign-in link for any user without requiring a pending queue request.
+        </p>
+        <form action={createDirectInvitation} className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="flex-1 w-full space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate">Full Name</label>
+            <input
+              type="text"
+              name="name"
+              required
+              placeholder="e.g. Sarah Jenkins"
+              className="w-full border-2 border-slate px-3 py-2 text-xs text-navy font-medium focus:outline-none focus:border-navy"
+            />
+          </div>
+          <div className="flex-1 w-full space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate">Email Address</label>
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="sarah@firm.com"
+              className="w-full border-2 border-slate px-3 py-2 text-xs text-navy font-medium focus:outline-none focus:border-navy"
+            />
+          </div>
+          <Button type="submit" size="sm" className="w-full sm:w-auto h-[38px] whitespace-nowrap">
+            Generate Link
+          </Button>
+        </form>
       </div>
 
       {/* Requests Table */}
