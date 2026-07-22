@@ -4,18 +4,18 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   const { supabase, response } = createClient(request);
 
-  // IMPORTANT: Do not add logic between createClient and getUser().
-  // Session cookie validation happens here — any interruption causes
-  // cross-browser cookie bugs.
+  // Refresh auth session
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
 
-  // Protect /dashboard and /admin — redirect to /login if unauthenticated
+  // Protected routes require authentication
   const isProtectedRoute =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/onboarding");
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
@@ -23,7 +23,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth/access pages to dashboard
+  // Redirect authenticated users away from auth pages (/login, /request-access)
   const isAuthPage =
     pathname.startsWith("/login") ||
     pathname.startsWith("/request-access");
@@ -39,13 +39,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata)
-     * - public static assets (.svg, .png, .jpg, etc.)
-     */
     "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

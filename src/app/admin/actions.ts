@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { getSiteUrl } from "@/utils/url";
 import { revalidatePath } from "next/cache";
 
 // Helper: verify the calling user is an admin
@@ -40,6 +41,7 @@ export async function approveInvitation(formData: FormData) {
   }
 
   const adminClient = createAdminClient();
+  const siteUrl = await getSiteUrl();
 
   // 1. Generate a one-time invite link (bypasses email sending entirely)
   const { data: linkData, error: inviteError } =
@@ -48,7 +50,7 @@ export async function approveInvitation(formData: FormData) {
       email,
       options: {
         data: { full_name: name },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+        redirectTo: `${siteUrl}/auth/confirm`,
       },
     });
 

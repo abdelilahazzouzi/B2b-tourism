@@ -27,7 +27,7 @@ export default async function DashboardLayout({
       .eq("id", user.id)
       .single();
     
-    if (profile && (!profile.full_name || profile.full_name.trim() === "")) {
+    if (!profile || !profile.full_name || profile.full_name.trim() === "") {
       redirect("/onboarding");
     }
 

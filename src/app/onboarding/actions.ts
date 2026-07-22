@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 
@@ -24,13 +25,13 @@ export async function submitOnboarding(formData: FormData) {
 
   const { error } = await supabase
     .from("profiles")
-    .update({ full_name: fullName.trim() })
-    .eq("id", user.id);
+    .upsert({ id: user.id, full_name: fullName.trim() }, { onConflict: "id" });
 
   if (error) {
     redirect(`/onboarding?error=${encodeURIComponent(error.message)}`);
   }
 
-  // Once updated, go to the dashboard
+  // Clear server cache for layout and pages before redirecting
+  revalidatePath("/", "layout");
   redirect("/dashboard");
 }

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+import { getSiteUrl } from "@/utils/url";
 import { z } from "zod";
 
 const requestSchema = z.object({
@@ -72,12 +73,13 @@ export async function sendMagicLink(formData: FormData) {
   const email = parsed.data;
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
+  const siteUrl = await getSiteUrl();
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
       shouldCreateUser: false,
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+      emailRedirectTo: `${siteUrl}/auth/confirm`,
     },
   });
 
