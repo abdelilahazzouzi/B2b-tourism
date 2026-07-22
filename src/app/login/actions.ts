@@ -12,13 +12,14 @@ const loginSchema = z.object({
 });
 
 function toUserFacingError(message: string): string {
-  if (message.includes("Invalid login credentials")) {
+  const msgLower = message.toLowerCase();
+  if (msgLower.includes("invalid login credentials")) {
     return "Incorrect email or password. If you signed up via a magic link, use \"Send me a link\" below.";
   }
-  if (message.includes("Email not confirmed")) {
+  if (msgLower.includes("email not confirmed")) {
     return "Please confirm your email before signing in.";
   }
-  return "Sign in failed. Please try again.";
+  return message;
 }
 
 export async function login(formData: FormData) {

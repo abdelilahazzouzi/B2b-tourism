@@ -12,19 +12,18 @@ const requestSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 
-// Generic error messages — never expose raw Supabase strings to the client.
-const AUTH_ERRORS: Record<string, string> = {
-  "Email rate limit exceeded": "Too many requests. Please wait a few minutes before trying again.",
-  "User already registered": "An account with this email already exists. Please sign in.",
-  "For security purposes, you can only request this after": "Please wait before requesting another link.",
-};
-
 function toUserFacingError(message: string): string {
   const msgLower = message.toLowerCase();
-  for (const [key, friendly] of Object.entries(AUTH_ERRORS)) {
-    if (msgLower.includes(key.toLowerCase())) return friendly;
+  if (msgLower.includes("rate limit") || msgLower.includes("too many requests")) {
+    return "Email rate limit reached. Please wait a few minutes before trying again or request a direct link from your admin.";
   }
-  return "Something went wrong. Please try again or contact support.";
+  if (msgLower.includes("user not found") || msgLower.includes("not allowed for otp") || msgLower.includes("invalid user")) {
+    return "No active account found for this email. Please request an invitation first.";
+  }
+  if (msgLower.includes("already registered") || msgLower.includes("already exists")) {
+    return "An account with this email already exists. Please sign in.";
+  }
+  return message;
 }
 
 export async function requestInvitation(formData: FormData) {
@@ -40,20 +39,44 @@ export async function requestInvitation(formData: FormData) {
   }
 
   const { name, email } = parsed.data;
-
   const adminClient = createAdminClient();
 
-  // Insert into the invitation_requests table for admin approval
+  // Check if this email already exists in invitation_requests
+  const { data: existing } = await adminClient
+    .from("invitation_requests")
+    .select("status")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (existing) {
+    if (existing.status === "approved") {
+      redirect(
+        `/request-access?error=${encodeURIComponent(
+          "Your invitation has already been approved! Please check your inbox for your access link, or contact an admin."
+        )}`
+      );
+    } else if (existing.status === "pending") {
+      redirect(
+        `/request-access?error=${encodeURIComponent(
+          "Your invitation request is currently under review by our team."
+        )}`
+      );
+    } else {
+      redirect(
+        `/request-access?error=${encodeURIComponent(
+          "An invitation request for this email was previously processed."
+        )}`
+      );
+    }
+  }
+
+  // Insert new request
   const { error } = await adminClient.from("invitation_requests").insert({
     name,
     email,
   });
 
   if (error) {
-    // 23505 is the PostgreSQL error code for unique_violation
-    if (error.code === "23505") {
-      redirect(`/request-access?error=${encodeURIComponent("You have already requested an invitation.")}`);
-    }
     const friendly = toUserFacingError(error.message);
     redirect(`/request-access?error=${encodeURIComponent(friendly)}`);
   }
